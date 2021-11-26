@@ -59,6 +59,13 @@ module Pay
       payment_processor.refund!(refund_amount)
     end
 
+    def capture!(capture_amount = nil)
+      return NoMethodError unless payment_processor.processor == "stripe"
+
+      capture_amount ||= amount
+      payment_processor.capture!(capture_amount)
+    end
+
     def refunded?
       amount_refunded.to_i > 0
     end
