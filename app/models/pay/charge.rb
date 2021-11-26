@@ -63,6 +63,7 @@ module Pay
       return NoMethodError unless payment_processor.processor == "stripe"
 
       capture_amount ||= amount
+      byebug
       payment_processor.capture!(capture_amount)
     end
 

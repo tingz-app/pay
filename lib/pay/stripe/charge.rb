@@ -68,8 +68,9 @@ module Pay
       #
       # capture!
       # capture!(5_00)
-      def refund!(amount_to_capture, **options)
-        ::Stripe::PaymentIntent.capture(pay_charge.id, options.merge( amount_to_capture: amount_to_capture), stripe_options)
+      def capture!(amount_to_capture, **options)
+        byebug
+        ::Stripe::PaymentIntent.capture(processor_id, options.merge( amount_to_capture: amount_to_capture), stripe_options)
         pay_charge.sync
       rescue ::Stripe::StripeError => e
         raise Pay::Stripe::Error, e
