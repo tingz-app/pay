@@ -60,7 +60,7 @@ module Pay
     end
 
     def capture!(capture_amount = nil)
-      return NoMethodError unless payment_processor.processor == "stripe"
+      # return NoMethodError unless payment_processor.processor == "stripe"
 
       capture_amount ||= amount
       byebug
