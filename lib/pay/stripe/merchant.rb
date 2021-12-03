@@ -64,10 +64,10 @@ module Pay
 
       # Retrieve account balance
       # https://stripe.com/docs/connect/account-balances
-      def balance(**options)
+      def balance
         ::Stripe::Balance.retrieve(
           {stripe_account: processor_id}
-        ).merge(options)
+        )
       rescue ::Stripe::StripeError => e
         raise Pay::Stripe::Error, e
       end
