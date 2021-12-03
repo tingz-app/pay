@@ -27,7 +27,9 @@ module Pay
       end
 
       def account
-        ::Stripe::Account.retrieve(processor_id)
+        account_info = ::Stripe::Account.retrieve(processor_id)
+        update_account_info!(account_info: account_info.merge(updated_at: Time.current.to_i))
+        account_info
       rescue ::Stripe::StripeError => e
         raise Pay::Stripe::Error, e
       end
@@ -65,11 +67,24 @@ module Pay
       # Retrieve account balance
       # https://stripe.com/docs/connect/account-balances
       def balance
-        ::Stripe::Balance.retrieve(
-          {stripe_account: processor_id}
-        )
+        return unless processor_id.present?
+
+        balance_data = ::Stripe::Balance.retrieve({stripe_account: processor_id})
+        actual_balance = {balance: balance_data.merge(updated_at: Time.current.to_i)}
+
+        update_account_info!(actual_balance)
+        balance_data
       rescue ::Stripe::StripeError => e
         raise Pay::Stripe::Error, e
+      end
+
+      private
+
+      def update_account_info!(data = {})
+        account_info = pay_merchant.account_info&.data || {}
+        pay_merchant.update(account_info_attributes: {
+          data: account_info.merge(data)
+        })
       end
     end
   end
