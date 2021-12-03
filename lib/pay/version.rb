@@ -1,3 +1,3 @@
 module Pay
-  VERSION = "3.0.26.tingz"
+  VERSION = "3.0.27.tingz"
 end
