@@ -21,13 +21,16 @@ module Pay
 
         stripe_account = ::Stripe::Account.create(defaults.merge(options))
         pay_merchant.update(processor_id: stripe_account.id)
+        update_account_info!(account_info: stripe_account.to_hash.merge(updated_at: Time.current))
         stripe_account
       rescue ::Stripe::StripeError => e
         raise Pay::Stripe::Error, e
       end
 
       def account
-        ::Stripe::Account.retrieve(processor_id)
+        account_info = ::Stripe::Account.retrieve(processor_id).to_hash
+        update_account_info!(account_info: account_info.merge(updated_at: Time.current))
+        account_info
       rescue ::Stripe::StripeError => e
         raise Pay::Stripe::Error, e
       end
@@ -60,6 +63,29 @@ module Pay
         }.merge(options))
       rescue ::Stripe::StripeError => e
         raise Pay::Stripe::Error, e
+      end
+
+      # Retrieve account balance
+      # https://stripe.com/docs/connect/account-balances
+      def balance
+        return unless processor_id.present?
+
+        balance_data = ::Stripe::Balance.retrieve({stripe_account: processor_id}).to_hash
+        actual_balance = {balance: balance_data.merge(updated_at: Time.current)}
+
+        update_account_info!(actual_balance)
+        balance_data
+      rescue ::Stripe::StripeError => e
+        raise Pay::Stripe::Error, e
+      end
+
+      private
+
+      def update_account_info!(data = {})
+        account_info = pay_merchant.account_info&.data || {}
+        pay_merchant.update(account_info_attributes: {
+          data: account_info.merge(data)
+        })
       end
     end
   end

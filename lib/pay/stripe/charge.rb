@@ -59,7 +59,20 @@ module Pay
       end
 
       def charge
-        ::Stripe::Charge.retrieve({id: processor_id, expand: ["customer", "invoice.subscription"]}, stripe_options)
+        ::Stripe::Charge.retrieve({id: processor_id, expand: ["customer", "invoice.subscription", "payment_intent"]}, stripe_options)
+      rescue ::Stripe::StripeError => e
+        raise Pay::Stripe::Error, e
+      end
+
+      # https://stripe.com/docs/api/payment_intents/capture
+      #
+      # capture!
+      # capture!(5_00)
+      def capture!(amount_to_capture, **options)
+        intent = ::Stripe::Charge.retrieve(id: processor_id)["payment_intent"]
+
+        ::Stripe::PaymentIntent.capture(intent, options.merge(amount_to_capture: amount_to_capture), stripe_options)
+        self.class.sync(processor_id)
       rescue ::Stripe::StripeError => e
         raise Pay::Stripe::Error, e
       end
